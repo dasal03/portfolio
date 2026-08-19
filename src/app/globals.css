@@ -1,26 +1,188 @@
 @import "tailwindcss";
 
+/* ------------------------------------------------------------------ *
+ * Design tokens — dark editorial
+ * ------------------------------------------------------------------ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Surfaces, darkest → lightest */
+  --bg-000: #050506;
+  --bg-100: #0a0a0c;
+  --bg-200: #101014;
+  --bg-300: #17171d;
+  --bg-400: #202029;
+
+  /* Text */
+  --txt-100: #fafafa;
+  --txt-300: #a5a5b0;
+  --txt-500: #6d6d7a;
+
+  /* Hairlines */
+  --line: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.18);
+
+  /* Accents */
+  --accent: #ff56e0;
+  --accent-2: #7c5cff;
+  --accent-soft: rgba(255, 86, 224, 0.16);
+
+  /* Motion — one easing vocabulary shared by CSS and GSAP */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --color-bg-000: var(--bg-000);
+  --color-bg-100: var(--bg-100);
+  --color-bg-200: var(--bg-200);
+  --color-bg-300: var(--bg-300);
+  --color-bg-400: var(--bg-400);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  --color-txt-100: var(--txt-100);
+  --color-txt-300: var(--txt-300);
+  --color-txt-500: var(--txt-500);
+
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+
+  --color-accent: var(--accent);
+  --color-accent-2: var(--accent-2);
+
+  --font-sans: var(--font-switzer);
+  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace;
+
+  --animate-marquee: marquee 38s linear infinite;
+  --animate-float: float 9s ease-in-out infinite;
+  --animate-spin-slow: spin 14s linear infinite;
+
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+  @keyframes float {
+    0%,
+    100% {
+      transform: translate(0, 0) scale(1);
+    }
+    50% {
+      transform: translate(-3%, 4%) scale(1.08);
+    }
   }
 }
 
+/* ------------------------------------------------------------------ *
+ * Base
+ * ------------------------------------------------------------------ */
+html {
+  /* Lenis drives scrolling; native smooth scroll would fight it. */
+  scroll-behavior: auto;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg-100);
+  color: var(--txt-300);
+  font-size: 17px;
+  line-height: 1.45;
+  letter-spacing: 0.01em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--txt-100);
+}
+
+/* Lenis owns the scroll position; these are its required base styles. */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-stopped {
+  overflow: clip;
+}
+
+/* Page is locked until the preloader hands over. */
+html.is-loading body {
+  overflow: clip;
+}
+
+/* ------------------------------------------------------------------ *
+ * Shared primitives
+ * ------------------------------------------------------------------ */
+
+/* Horizontal rhythm used by every section. */
+@utility shell {
+  margin-inline: auto;
+  width: 100%;
+  padding-inline: 1.5rem;
+  @media (width >= 768px) {
+    padding-inline: 2.5rem;
+  }
+  @media (width >= 1280px) {
+    max-width: 1280px;
+    padding-inline: 3rem;
+  }
+}
+
+/* Small uppercase mono label that prefixes each section. */
+@utility eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--txt-500);
+}
+
+.text-gradient {
+  background: linear-gradient(100deg, var(--txt-100) 30%, var(--accent) 70%, var(--accent-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Fine film grain over the whole page — sells the dark palette. */
+.grain::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  pointer-events: none;
+  opacity: 0.032;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/></filter><rect width='140' height='140' filter='url(%23n)'/></svg>");
+}
+
+/* GSAP SplitText targets: each line is masked so words rise into view. */
+.split-line {
+  overflow: hidden;
+  padding-bottom: 0.06em;
+}
+
+/* Hides pre-animation content so nothing flashes before GSAP takes over.
+   Cleared by gsap.set() on mount, or immediately for reduced motion. */
+[data-anim] {
+  visibility: hidden;
+}
+
+.dotted-line {
+  background-image: linear-gradient(var(--line-strong) 40%, transparent 0%);
+  background-position: top;
+  background-size: 1px 7px;
+  background-repeat: repeat-y;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-anim] {
+    visibility: visible;
+  }
+  .animate-marquee,
+  .animate-float,
+  .animate-spin-slow {
+    animation: none !important;
+  }
 }
